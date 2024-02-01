@@ -20,8 +20,11 @@ exports.startServer = void 0;
 const ProfilesManagement_1 = require("./ProfilesManagement");
 const mongoDB_1 = require("./mongoDB");
 const scraper_1 = require("./scraper");
+const dotenv_1 = __importDefault(require("dotenv"));
 const express_1 = __importDefault(require("express"));
 const cors_1 = __importDefault(require("cors"));
+dotenv_1.default.config();
+const dbURL = process.env.mongoDB_URL;
 function startServer() {
     return __awaiter(this, void 0, void 0, function* () {
         const server = (0, express_1.default)();
@@ -31,7 +34,8 @@ function startServer() {
         //Remember to setup the mongodb class and it should be working.
         //Also need to setup profiles & profilesmanagement before I continue working on the frontend portion of the website because I want to 
         //save some values for later testing and it would be better to setup the backend to work w it right away
-        const db = new mongoDB_1.MongoDB("mongodb+srv://test:Wp50vK2QqH1Novbe@testwebsite.qhbd7lk.mongodb.net/?retryWrites=true&w=majority");
+        const db = new mongoDB_1.MongoDB(dbURL);
+        //const db = new MongoDB("mongodb+srv://test:Wp50vK2QqH1Novbe@testwebsite.qhbd7lk.mongodb.net/?retryWrites=true&w=majority");
         const profileManagement = new ProfilesManagement_1.ProfileManagement(db);
         //const test = await scrapeLinks("https://manganato.com/manga-wo1000097", "chapter");
         //console.log(test);
@@ -51,6 +55,7 @@ function startServer() {
             const displayName = req.query.DisplayName;
             const username = req.query.Username;
             const pw = req.query.Password;
+            console.log("Printing displayname, username and pw to test if its going null here " + displayName + " " + username + " " + pw);
             const msg = yield profileManagement.signIn(displayName, username, pw);
             res.send(msg);
         }));
@@ -62,6 +67,17 @@ function startServer() {
             const pw = req.query.Password;
             const msg = yield profileManagement.login(username, pw);
             res.send(msg);
+        }));
+        /**
+         * This is the returnProfile API
+         */
+        server.get('/ReturnProfileInformation', (req, res) => __awaiter(this, void 0, void 0, function* () {
+            const username = req.query.Username;
+            let profile = yield profileManagement.accessUser(username); //Maybe I should have a check for if profile is null ?
+            profile.setMongoDB(null);
+            let JSONConversion = JSON.stringify(profile);
+            profile.setMongoDB(db);
+            res.send(JSONConversion);
         }));
         /**
          * This is the novels API test

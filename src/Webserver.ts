@@ -15,7 +15,7 @@ import {Request, Response, NextFunction} from 'express';
 
 
 dotenv.config()
-const dbURL = process.env.mongoDB_URL;
+const dbURL = process.env.mongoDB_URL as string;
 
 
 export async function startServer() {
@@ -24,9 +24,6 @@ export async function startServer() {
       allowedHeaders: "*"
   }))
 
-  //Remember to setup the mongodb class and it should be working.
-  //Also need to setup profiles & profilesmanagement before I continue working on the frontend portion of the website because I want to 
-  //save some values for later testing and it would be better to setup the backend to work w it right away
   const db = new MongoDB(dbURL);
   const profileManagement = new ProfileManagement(db);
 
@@ -66,6 +63,17 @@ export async function startServer() {
     res.send(msg);
   } )
 
+  /**
+   * This is the returnProfile API
+   */
+  server.get('/ReturnProfileInformation', async (req: Request, res: Response) => {
+    const username = req.query.Username as string;
+    let profile = await profileManagement.accessUser(username); //Maybe I should have a check for if profile is null ?
+    profile.setMongoDB(null); 
+    let JSONConversion = JSON.stringify( profile );
+    profile.setMongoDB(db);
+    res.send( JSONConversion );
+  } )
 
   /**
    * This is the novels API test
