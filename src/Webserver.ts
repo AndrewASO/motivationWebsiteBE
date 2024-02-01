@@ -7,12 +7,15 @@
 import { ProfileManagement } from "./ProfilesManagement";
 import { MongoDB } from "./mongoDB";
 import { scrapeLinks, scrapeText } from "./scraper";
+import dotenv from 'dotenv';
 
 import express from "express"
 import cors from 'cors';
 import {Request, Response, NextFunction} from 'express';
 
 
+dotenv.config()
+const dbURL = process.env.mongoDB_URL;
 
 
 export async function startServer() {
@@ -24,7 +27,7 @@ export async function startServer() {
   //Remember to setup the mongodb class and it should be working.
   //Also need to setup profiles & profilesmanagement before I continue working on the frontend portion of the website because I want to 
   //save some values for later testing and it would be better to setup the backend to work w it right away
-  const db = new MongoDB("mongodb+srv://test:Wp50vK2QqH1Novbe@testwebsite.qhbd7lk.mongodb.net/?retryWrites=true&w=majority");
+  const db = new MongoDB(dbURL);
   const profileManagement = new ProfileManagement(db);
 
   //const test = await scrapeLinks("https://manganato.com/manga-wo1000097", "chapter");
