@@ -7,6 +7,9 @@
 
 
 import { MongoDB } from "./mongoDB";
+import { Task, CompletionStats, calculateAndSaveCompletionPercentage, TaskDoc } from './tasks';
+
+const mongoose = require('mongoose');
 
 export class Profile {
 
@@ -15,6 +18,7 @@ export class Profile {
     private username;
     private password;
     private db : MongoDB;
+
 
     public constructor(displayName : string, username : string, password : string, db : MongoDB); //Constructor for signing up
     public constructor(username : string, password : string, db : MongoDB); //Constructor for logging in
@@ -86,6 +90,42 @@ export class Profile {
     public setMongoDB(mongo : MongoDB ) {
         this.db = mongo;
     }
+
+
+    // Method to add a task
+    async addTask(description: string): Promise<void> {
+        const newTask = new Task({
+            username: this.username, // Assuming this.username is available in the Profile class
+            description: description,
+            completed: false
+        });
+        await newTask.save();
+    }
+
+    // Method to complete a task
+    async completeTask(taskId: string): Promise<void> {
+        await Task.findByIdAndUpdate(taskId, { completed: true });
+        // Optionally, recalculate completion stats here if needed
+    }
+
+    // Method to calculate and save completion percentage for a specific date
+    async calculateAndSaveCompletionPercentageForDate(date: Date): Promise<void> {
+        await calculateAndSaveCompletionPercentage(this.username, date);
+    }
+
+    // Assuming Task is a Mongoose model
+    async getTasks(): Promise<TaskDoc[]> {
+        const tasks = await Task.find({ username: this.username });
+        return tasks;
+    }
+
+
+
+
+
+
+
+
 
     /**
      * This returns the displayName variable

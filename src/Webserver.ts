@@ -7,6 +7,7 @@
 import { ProfileManagement } from "./ProfilesManagement";
 import { MongoDB } from "./mongoDB";
 import { scrapeLinks, scrapeText } from "./scraper";
+import { Task, CompletionStats, calculateAndSaveCompletionPercentage } from './tasks';
 import dotenv from 'dotenv';
 
 import express from "express"
@@ -23,15 +24,10 @@ export async function startServer() {
   server.use(cors({
       allowedHeaders: "*"
   }))
+  server.use(express.json() );
 
   const db = new MongoDB(dbURL);
   const profileManagement = new ProfileManagement(db);
-
-  //const test = await scrapeLinks("https://manganato.com/manga-wo1000097", "chapter");
-  //console.log(test);
-
-  //const test2 = await scrapeLinks("https://fanstranslations.com/novel/in-place-of-losing-my-memory-i-remembered-that-i-was-the-fiancee-of-the-capture-target/", "chapter");
-  //console.log(test2);
 
   /**
    * 
@@ -45,21 +41,18 @@ export async function startServer() {
   /**
    * This is the API call for allowing frontend to send a SignIn request with all of the different fields necessary for it.
    */
-  server.get('/SignIn', async (req: Request, res: Response) => {
-    const displayName = req.query.DisplayName as string;
-    const username = req.query.Username as string;
-    const pw = req.query.Password as string;
-    const msg = await profileManagement.signIn( displayName, username, pw);
+  server.post('/SignIn', async (req: Request, res: Response) => {
+    const { displayName, username, password } = req.body;
+    const msg = await profileManagement.signIn( displayName, username, password);
     res.send(msg);
   } )
 
   /**
    * This is the Login API.
    */
-  server.get('/Login', async (req: Request, res: Response) => {
-    const username = req.query.Username as string;
-    const pw = req.query.Password as string;
-    const msg = await profileManagement.login( username, pw);
+  server.post('/Login', async (req: Request, res: Response) => {
+    const { username, password } = req.body;
+    const msg = await profileManagement.login( username, password);
     res.send(msg);
   } )
 
@@ -82,7 +75,56 @@ export async function startServer() {
     const test2 = await scrapeLinks("https://fanstranslations.com/novel/in-place-of-losing-my-memory-i-remembered-that-i-was-the-fiancee-of-the-capture-target/", "chapter");
     res.send(test2);
   } )
-  
+
+
+  // Endpoint to add a new task
+server.post('/tasks/add', async (req, res) => {
+  const { username, description } = req.body;
+  try {
+      let profile = await profileManagement.accessUser(username);
+      if (!profile) {
+          return res.status(404).send({ error: "Profile not found" });
+      }
+      await profile.addTask(description);
+      res.status(201).send({ message: "Task added successfully" });
+  } catch (error) {
+      res.status(400).send({ error: "Failed to add task", details: error instanceof Error ? error.toString() : String(error) });
+  }
+});
+
+// Endpoint to complete a task
+server.post('/tasks/complete', async (req, res) => {
+  const { username, taskId } = req.body;
+  try {
+      let profile = await profileManagement.accessUser(username);
+      if (!profile) {
+          return res.status(404).send({ error: "Profile not found" });
+      }
+      await profile.completeTask(taskId);
+      await profile.calculateAndSaveCompletionPercentageForDate(new Date());
+      res.status(200).send({ message: "Task completed successfully" });
+  } catch (error) {
+      res.status(400).send({ error: "Failed to complete task", details: error instanceof Error ? error.toString() : String(error) });
+  }
+});
+
+// Endpoint to retrieve user's tasks
+server.get('/tasks', async (req, res) => {
+  const username = req.query.Username as string;
+  try {
+      let profile = await profileManagement.accessUser(username);
+      if (!profile) {
+          return res.status(404).send({ error: "Profile not found" });
+      }
+      const tasks = await profile.getTasks();
+      res.status(200).send(tasks);
+  } catch (error) {
+      res.status(400).send({ error: "Failed to retrieve tasks", details: error instanceof Error ? error.toString() : String(error) });
+  }
+});
+
+
+
 
 
     

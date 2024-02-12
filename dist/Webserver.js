@@ -31,11 +31,8 @@ function startServer() {
         server.use((0, cors_1.default)({
             allowedHeaders: "*"
         }));
-        //Remember to setup the mongodb class and it should be working.
-        //Also need to setup profiles & profilesmanagement before I continue working on the frontend portion of the website because I want to 
-        //save some values for later testing and it would be better to setup the backend to work w it right away
+        server.use(express_1.default.json());
         const db = new mongoDB_1.MongoDB(dbURL);
-        //const db = new MongoDB("mongodb+srv://test:Wp50vK2QqH1Novbe@testwebsite.qhbd7lk.mongodb.net/?retryWrites=true&w=majority");
         const profileManagement = new ProfilesManagement_1.ProfileManagement(db);
         //const test = await scrapeLinks("https://manganato.com/manga-wo1000097", "chapter");
         //console.log(test);
@@ -51,21 +48,17 @@ function startServer() {
         /**
          * This is the API call for allowing frontend to send a SignIn request with all of the different fields necessary for it.
          */
-        server.get('/SignIn', (req, res) => __awaiter(this, void 0, void 0, function* () {
-            const displayName = req.query.DisplayName;
-            const username = req.query.Username;
-            const pw = req.query.Password;
-            console.log("Printing displayname, username and pw to test if its going null here " + displayName + " " + username + " " + pw);
-            const msg = yield profileManagement.signIn(displayName, username, pw);
+        server.post('/SignIn', (req, res) => __awaiter(this, void 0, void 0, function* () {
+            const { displayName, username, password } = req.body;
+            const msg = yield profileManagement.signIn(displayName, username, password);
             res.send(msg);
         }));
         /**
          * This is the Login API.
          */
-        server.get('/Login', (req, res) => __awaiter(this, void 0, void 0, function* () {
-            const username = req.query.Username;
-            const pw = req.query.Password;
-            const msg = yield profileManagement.login(username, pw);
+        server.post('/Login', (req, res) => __awaiter(this, void 0, void 0, function* () {
+            const { username, password } = req.body;
+            const msg = yield profileManagement.login(username, password);
             res.send(msg);
         }));
         /**

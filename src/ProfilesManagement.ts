@@ -18,10 +18,6 @@ export class ProfileManagement {
         this.initialize();
     }
 
-    async test() {
-        let collection = this.db.returnCollection("ProfilesDB", "Profiles");
-    }
-
     /**
      * This creates a Profile Class for each of the different Profiles that're being stored in the Database.
      * It then adds it to the profileList array and makes sure all of the information is being transferred over from the
