@@ -10,6 +10,8 @@ import { MongoDB } from "./mongoDB";
 import { Task, CompletionStats, calculateAndSaveCompletionPercentage, TaskDoc } from './tasks';
 
 const mongoose = require('mongoose');
+const bcrypt = require('bcrypt');
+const saltRounds = 10;
 
 export class Profile {
 
@@ -17,6 +19,7 @@ export class Profile {
     private displayName;
     private username;
     private password;
+    private tasks: TaskDoc[] = [];
     private db : MongoDB;
 
 
@@ -44,7 +47,7 @@ export class Profile {
      */
     async saveToDB() {
         let collection = this.db.returnCollection("ProfilesDB", "Profiles");
-        collection.insertOne( {"Username" : this.username, "Password" : this.password, "DisplayName" : this.displayName})
+        collection.insertOne( {"Username" : this.username, "Password" : this.password, "DisplayName" : this.displayName, "Tasks" : this.tasks} )
     }
 
     /**
@@ -78,7 +81,9 @@ export class Profile {
     public updateDB() {
         this.db.updateDB("ProfilesDB", "Profiles", this.username, "DisplayName", this.displayName);
         this.db.updateDB("ProfilesDB", "Profiles", this.username, "Password", this.password);
+        this.db.updateDB("ProfilesDB", "Profiles", this.username, "Tasks", this.tasks);
 
+        //console.log( this.tasks );
     }
 
     /**
@@ -92,31 +97,44 @@ export class Profile {
     }
 
 
-    // Method to add a task
-    async addTask(description: string): Promise<void> {
-        const newTask = new Task({
-            username: this.username, // Assuming this.username is available in the Profile class
+    // Updated to reflect removal of the username requirement in TaskDoc
+    async addTask(description: string) {
+        const newTask: TaskDoc = new Task({
             description: description,
-            completed: false
+            completed: false,
+            date: new Date(),
         });
-        await newTask.save();
+        this.tasks.push(newTask); // Add the new task to the local tasks array
+        await this.updateDB(); // Optionally, update the profile document in MongoDB
+    }
+
+    // Method to delete a task within a profile
+    async deleteTask(taskId: string): Promise<void> {
+        this.tasks = this.tasks.filter(task => task.id !== taskId); // Assuming each task has an 'id' property
+        await this.updateDB(); // If you're storing the modified profile back in MongoDB
     }
 
     // Method to complete a task
-    async completeTask(taskId: string): Promise<void> {
-        await Task.findByIdAndUpdate(taskId, { completed: true });
-        // Optionally, recalculate completion stats here if needed
+    async completeTask(taskDescription: string) {
+        const task = this.tasks.find(task => task.description === taskDescription);
+        if (task) {
+            task.completed = true;
+            await this.updateDB();
+        }
     }
 
     // Method to calculate and save completion percentage for a specific date
-    async calculateAndSaveCompletionPercentageForDate(date: Date): Promise<void> {
-        await calculateAndSaveCompletionPercentage(this.username, date);
+    async calculateAndSaveCompletionPercentage(): Promise<number> {
+        return await calculateAndSaveCompletionPercentage(this.tasks);
     }
 
-    // Assuming Task is a Mongoose model
-    async getTasks(): Promise<TaskDoc[]> {
-        const tasks = await Task.find({ username: this.username });
-        return tasks;
+    public getProfileTasks(): TaskDoc[] {
+        return this.tasks;
+    }
+
+    public async resetTasks() {
+        this.tasks = new Array();
+        this.updateDB();
     }
 
 

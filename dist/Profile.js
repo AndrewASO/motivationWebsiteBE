@@ -16,8 +16,13 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.Profile = void 0;
+const tasks_1 = require("./tasks");
+const mongoose = require('mongoose');
+const bcrypt = require('bcrypt');
+const saltRounds = 10;
 class Profile {
     constructor(...arr) {
+        this.tasks = [];
         if (arr.length == 4) {
             this.displayName = arr[0];
             this.username = arr[1];
@@ -38,7 +43,7 @@ class Profile {
     saveToDB() {
         return __awaiter(this, void 0, void 0, function* () {
             let collection = this.db.returnCollection("ProfilesDB", "Profiles");
-            collection.insertOne({ "Username": this.username, "Password": this.password, "DisplayName": this.displayName });
+            collection.insertOne({ "Username": this.username, "Password": this.password, "DisplayName": this.displayName, "Tasks": this.tasks });
         });
     }
     /**
@@ -70,6 +75,8 @@ class Profile {
     updateDB() {
         this.db.updateDB("ProfilesDB", "Profiles", this.username, "DisplayName", this.displayName);
         this.db.updateDB("ProfilesDB", "Profiles", this.username, "Password", this.password);
+        this.db.updateDB("ProfilesDB", "Profiles", this.username, "Tasks", this.tasks);
+        //console.log( this.tasks );
     }
     /**
      * Allows for the modification of the db variable. This was done to circumvent the Profile Obj attempting to convert
@@ -79,6 +86,50 @@ class Profile {
      */
     setMongoDB(mongo) {
         this.db = mongo;
+    }
+    // Updated to reflect removal of the username requirement in TaskDoc
+    addTask(description) {
+        return __awaiter(this, void 0, void 0, function* () {
+            const newTask = new tasks_1.Task({
+                description: description,
+                completed: false,
+                date: new Date(),
+            });
+            this.tasks.push(newTask); // Add the new task to the local tasks array
+            yield this.updateDB(); // Optionally, update the profile document in MongoDB
+        });
+    }
+    // Method to delete a task within a profile
+    deleteTask(taskId) {
+        return __awaiter(this, void 0, void 0, function* () {
+            this.tasks = this.tasks.filter(task => task.id !== taskId); // Assuming each task has an 'id' property
+            yield this.updateDB(); // If you're storing the modified profile back in MongoDB
+        });
+    }
+    // Method to complete a task
+    completeTask(taskDescription) {
+        return __awaiter(this, void 0, void 0, function* () {
+            const task = this.tasks.find(task => task.description === taskDescription);
+            if (task) {
+                task.completed = true;
+                yield this.updateDB();
+            }
+        });
+    }
+    // Method to calculate and save completion percentage for a specific date
+    calculateAndSaveCompletionPercentage() {
+        return __awaiter(this, void 0, void 0, function* () {
+            return yield (0, tasks_1.calculateAndSaveCompletionPercentage)(this.tasks);
+        });
+    }
+    getProfileTasks() {
+        return this.tasks;
+    }
+    resetTasks() {
+        return __awaiter(this, void 0, void 0, function* () {
+            this.tasks = new Array();
+            this.updateDB();
+        });
     }
     /**
      * This returns the displayName variable

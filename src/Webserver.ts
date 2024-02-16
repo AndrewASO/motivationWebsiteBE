@@ -78,50 +78,51 @@ export async function startServer() {
 
 
   // Endpoint to add a new task
-server.post('/tasks/add', async (req, res) => {
-  const { username, description } = req.body;
-  try {
-      let profile = await profileManagement.accessUser(username);
+  server.post('/tasks/add', async (req, res) => {
+    const { username, description } = req.body; // Assuming tasks are added via profile ID now
+    try {
+      let profile = await profileManagement.accessUser(username); // Adjusted to access by ID
       if (!profile) {
-          return res.status(404).send({ error: "Profile not found" });
+        return res.status(404).send({ error: "Profile not found" });
       }
       await profile.addTask(description);
       res.status(201).send({ message: "Task added successfully" });
-  } catch (error) {
+    } catch (error) {
       res.status(400).send({ error: "Failed to add task", details: error instanceof Error ? error.toString() : String(error) });
-  }
-});
+    }
+  });
 
-// Endpoint to complete a task
-server.post('/tasks/complete', async (req, res) => {
-  const { username, taskId } = req.body;
-  try {
+  // Endpoint to complete a task
+  server.post('/tasks/complete', async (req, res) => {
+    const { username, taskId } = req.body; // Adjusted for task completion via profile ID
+    try {
       let profile = await profileManagement.accessUser(username);
       if (!profile) {
-          return res.status(404).send({ error: "Profile not found" });
+        return res.status(404).send({ error: "Profile not found" });
       }
       await profile.completeTask(taskId);
-      await profile.calculateAndSaveCompletionPercentageForDate(new Date());
+      // Removed the call to calculate and save completion percentage as it might not be needed here
       res.status(200).send({ message: "Task completed successfully" });
-  } catch (error) {
+    } catch (error) {
       res.status(400).send({ error: "Failed to complete task", details: error instanceof Error ? error.toString() : String(error) });
-  }
-});
+    }
+  });
 
-// Endpoint to retrieve user's tasks
-server.get('/tasks', async (req, res) => {
-  const username = req.query.Username as string;
-  try {
+  // Endpoint to retrieve user's tasks
+  server.get('/tasks', async (req, res) => {
+    const username = req.query.Username as string; // Adjusted to use profile ID
+    try {
       let profile = await profileManagement.accessUser(username);
       if (!profile) {
-          return res.status(404).send({ error: "Profile not found" });
+        return res.status(404).send({ error: "Profile not found" });
       }
-      const tasks = await profile.getTasks();
+      const tasks = profile.getProfileTasks(); // Adjusted to use the new method name
       res.status(200).send(tasks);
-  } catch (error) {
+    } catch (error) {
       res.status(400).send({ error: "Failed to retrieve tasks", details: error instanceof Error ? error.toString() : String(error) });
-  }
-});
+    }
+  });
+
 
 
 

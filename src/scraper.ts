@@ -50,6 +50,8 @@ function primaryScrapingMethod($: any, keyword: string): LinkResult[] {
     return results;
 }
 
+//I need to change this for working w the fantranslations website and it could be any link or if its fantranslations
+//then it'll go straight to this 
 async function secondaryScrapingMethod(postUrl: string): Promise<LinkResult[]> {
     try {
         const headers = {

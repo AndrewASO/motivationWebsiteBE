@@ -49,6 +49,8 @@ function primaryScrapingMethod($, keyword) {
     });
     return results;
 }
+//I need to change this for working w the fantranslations website and it could be any link or if its fantranslations
+//then it'll go straight to this 
 function secondaryScrapingMethod(postUrl) {
     return __awaiter(this, void 0, void 0, function* () {
         try {

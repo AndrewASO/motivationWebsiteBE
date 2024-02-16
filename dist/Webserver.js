@@ -34,10 +34,6 @@ function startServer() {
         server.use(express_1.default.json());
         const db = new mongoDB_1.MongoDB(dbURL);
         const profileManagement = new ProfilesManagement_1.ProfileManagement(db);
-        //const test = await scrapeLinks("https://manganato.com/manga-wo1000097", "chapter");
-        //console.log(test);
-        //const test2 = await scrapeLinks("https://fanstranslations.com/novel/in-place-of-losing-my-memory-i-remembered-that-i-was-the-fiancee-of-the-capture-target/", "chapter");
-        //console.log(test2);
         /**
          *
          *
@@ -78,6 +74,52 @@ function startServer() {
         server.get('/novelTest', (req, res) => __awaiter(this, void 0, void 0, function* () {
             const test2 = yield (0, scraper_1.scrapeLinks)("https://fanstranslations.com/novel/in-place-of-losing-my-memory-i-remembered-that-i-was-the-fiancee-of-the-capture-target/", "chapter");
             res.send(test2);
+        }));
+        // Endpoint to add a new task
+        server.post('/tasks/add', (req, res) => __awaiter(this, void 0, void 0, function* () {
+            const { username, description } = req.body; // Assuming tasks are added via profile ID now
+            try {
+                let profile = yield profileManagement.accessUser(username); // Adjusted to access by ID
+                if (!profile) {
+                    return res.status(404).send({ error: "Profile not found" });
+                }
+                yield profile.addTask(description);
+                res.status(201).send({ message: "Task added successfully" });
+            }
+            catch (error) {
+                res.status(400).send({ error: "Failed to add task", details: error instanceof Error ? error.toString() : String(error) });
+            }
+        }));
+        // Endpoint to complete a task
+        server.post('/tasks/complete', (req, res) => __awaiter(this, void 0, void 0, function* () {
+            const { username, taskId } = req.body; // Adjusted for task completion via profile ID
+            try {
+                let profile = yield profileManagement.accessUser(username);
+                if (!profile) {
+                    return res.status(404).send({ error: "Profile not found" });
+                }
+                yield profile.completeTask(taskId);
+                // Removed the call to calculate and save completion percentage as it might not be needed here
+                res.status(200).send({ message: "Task completed successfully" });
+            }
+            catch (error) {
+                res.status(400).send({ error: "Failed to complete task", details: error instanceof Error ? error.toString() : String(error) });
+            }
+        }));
+        // Endpoint to retrieve user's tasks
+        server.get('/tasks', (req, res) => __awaiter(this, void 0, void 0, function* () {
+            const username = req.query.Username; // Adjusted to use profile ID
+            try {
+                let profile = yield profileManagement.accessUser(username);
+                if (!profile) {
+                    return res.status(404).send({ error: "Profile not found" });
+                }
+                const tasks = profile.getProfileTasks(); // Adjusted to use the new method name
+                res.status(200).send(tasks);
+            }
+            catch (error) {
+                res.status(400).send({ error: "Failed to retrieve tasks", details: error instanceof Error ? error.toString() : String(error) });
+            }
         }));
         server.listen(3000);
     });
