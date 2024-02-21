@@ -52,8 +52,14 @@ export async function startServer() {
    */
   server.post('/Login', async (req: Request, res: Response) => {
     const { username, password } = req.body;
-    const msg = await profileManagement.login( username, password);
-    res.send(msg);
+    const sessionId = await profileManagement.login( username, password);
+    if (sessionId) {
+      // Successful login, return JSON with sessionId
+      res.json({ sessionId: sessionId });
+    } else {
+      // Unsuccessful login, return JSON indicating failure
+      res.status(401).json({ success: false, message: "Invalid username or password" });
+    }
   } )
 
   /**
@@ -61,12 +67,15 @@ export async function startServer() {
    */
   server.get('/ReturnProfileInformation', async (req: Request, res: Response) => {
     const username = req.query.Username as string;
-    let profile = await profileManagement.accessUser(username); //Maybe I should have a check for if profile is null ?
-    profile.setMongoDB(null); 
-    let JSONConversion = JSON.stringify( profile );
-    profile.setMongoDB(db);
-    res.send( JSONConversion );
-  } )
+    try {
+        const profile = await profileManagement.getProfileOrThrow(username);
+        res.json(profile); // Directly send the profile object, toJSON will be called automatically
+    } catch (error) {
+        console.error(error);
+        res.status(500).send({ error: "Failed to retrieve profile" });
+    }
+  });
+
 
   /**
    * This is the novels API test
@@ -120,6 +129,36 @@ export async function startServer() {
       res.status(200).send(tasks);
     } catch (error) {
       res.status(400).send({ error: "Failed to retrieve tasks", details: error instanceof Error ? error.toString() : String(error) });
+    }
+  });
+
+  // Endpoint to delete a task
+  server.delete('/tasks/delete', async (req, res) => {
+    const { username, taskDescription } = req.body; // Assume task identification by description
+    try {
+        let profile = await profileManagement.accessUser(username);
+        if (!profile) {
+            return res.status(404).send({ error: "Profile not found" });
+        }
+        await profile.deleteTask(taskDescription);
+        res.status(200).send({ message: "Task deleted successfully" });
+    } catch (error) {
+        res.status(400).send({ error: "Failed to delete task", details: error instanceof Error ? error.toString() : String(error) });
+    }
+  });
+
+  // Endpoint to reset all tasks
+  server.post('/tasks/reset', async (req, res) => {
+    const { username } = req.body; // Reset tasks for a given profile
+    try {
+        let profile = await profileManagement.accessUser(username);
+        if (!profile) {
+            return res.status(404).send({ error: "Profile not found" });
+        }
+        await profile.resetTasks();
+        res.status(200).send({ message: "Tasks reset successfully" });
+    } catch (error) {
+        res.status(400).send({ error: "Failed to reset tasks", details: error instanceof Error ? error.toString() : String(error) });
     }
   });
 

@@ -14,13 +14,21 @@ describe('Task Management', () => {
     // Mock the MongoDB connection (assuming MongoDB is used within Profile)
     const dbURL: string = process.env.mongoDB_URL as string;
     const db = new MongoDB(dbURL);
-    const profileManagement = new ProfileManagement(db, "test");
+    const profileManagement = new ProfileManagement(db, true);
     await profileManagement.initialize();
 
     // Create a new profile instance directly instead of accessing through ProfileManagement for simplicity
     // Adjust the constructor parameters as per your Profile class definition
-    const tempProfile = await profileManagement.accessUser("testing1");
-    profile = tempProfile;
+
+    // Usage
+    try {
+      const tempProfile = await profileManagement.getProfileOrThrow("testing1");
+      profile = tempProfile;
+    } catch (error) {
+      console.error(error);
+      // Handle the error, e.g., return an error response in an API call
+    }
+
   });
 
   it('can add tasks to a profile', async () => {

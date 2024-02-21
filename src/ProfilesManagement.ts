@@ -6,170 +6,132 @@
 
 import { MongoDB } from "./mongoDB";
 import { Profile } from "./Profile";
-
-
 const crypto = require('crypto');
 const bcrypt = require('bcrypt');
 const saltRounds = 10;
 
 export class ProfileManagement {
-
-    public profileList = new Array();
-    private db : MongoDB;
-    
+    private profileList: Profile[] = [];
+    private db: MongoDB;
 
     /**
-     * This whole thing should probably be changed later on, but this was merely a way of going around some unit testing issues
-     * where the code wouldn't run for initialize() if I didn't call it twice and when I called it twice, sometimes I only got
-     * 1 set of profiles or other times 2 sets of profiles. It was very inconsistent and I'd prefer something to work consistently 
-     * even if it isn't the best method. Just need to test how the function is executed and what order for jest and fix it
-     * at a later date.
+     * Initializes the ProfileManagement with a MongoDB connection.
+     * Optionally skips initialization for unit testing purposes.
+     * @param {MongoDB} db - The MongoDB connection instance.
+     * @param {boolean} skipInit - If true, skips automatic initialization (useful for testing).
      */
-    public constructor( db : MongoDB ); //Normal startup
-    public constructor( db : MongoDB, test : string);   //Unit test startup
-
-    constructor(...arr: any[] ){
-        if( arr.length == 1){
-            this.db = arr[0];
+    constructor(db: MongoDB, skipInit = false) {
+        this.db = db;
+        if (!skipInit) {
             this.initialize();
         }
-        else{
-            this.db = arr[0];
-        }
-    }
-
-    public clearProfiles() {
-        this.profileList = new Array();
-    }
-    
-    /**
-     * This creates a Profile Class for each of the different Profiles that're being stored in the Database.
-     * It then adds it to the profileList array and makes sure all of the information is being transferred over from the
-     * database into the Profile Object.
-     */
-    async initialize() {
-
-        
-
-        const collection = this.db.returnCollection("ProfilesDB", "Profiles");
-
-        var usernameList = new Array();
-        var pwList = new Array();
-
-        await collection.find().forEach( function(myDoc: { Username: string; } ) { usernameList.push(myDoc.Username) }  );
-        await collection.find().forEach( function(myDoc: { Password: string; } ) { pwList.push(myDoc.Password) } );
-
-        for(var i = 0; i < usernameList.length; i++){
-            let oldProfile = new Profile( usernameList[i], pwList[i], this.db);
-            this.profileList.push( oldProfile );
-        }
-        
-        
-        /** 
-        const collection = this.db.returnCollection("ProfilesDB", "Profiles");
-
-            // Use toArray to simplify retrieval of documents
-            const documents = await collection.find().toArray();
-
-            // Use a single loop to create profile instances
-            documents.forEach((doc: { Username: string; Password: string; }) => {
-                let oldProfile = new Profile(doc.Username, doc.Password, this.db);
-                this.profileList.push(oldProfile);
-            });
-
-        */
-
     }
 
     /**
-     * This checks if the username that the user wants is taken or not, if the username isn't taken then a new Profile Obj
-     * will be created and pushed to the array, and it'll be saved to the database.
-     * @param displayName 
-     * @param username 
-     * @param password 
-     * @returns Returns true if username hasn't been chosen yet, false if username is taken.
+     * Clears the loaded profiles list. Useful for resetting state in testing or reinitialization.
      */
-    async signIn(displayName : string, username : string, password : string) {
+    public async clearProfiles() {
+        this.profileList = [];
+    }
 
+    /**
+     * Asynchronously initializes the profile list from the database.
+     * Retrieves all profile documents and transforms them into Profile instances.
+     */
+    public async initialize() {
         const collection = this.db.returnCollection("ProfilesDB", "Profiles");
-        const doc = await collection.findOne( {Username : username} );
+        const documents = await collection.find().toArray();
+        this.profileList = documents.map((doc: { Username: string; Password: string; }) => new Profile(doc.Username, doc.Password, this.db));
+    }
 
-        if(doc == null) {    //Username hasn't been chosen yet for the website
+    /**
+     * Attempts to sign in a new user with a display name, username, and password.
+     * Hashes the password for secure storage. If the username is unique, creates a new profile.
+     * @param {string} displayName - User's display name.
+     * @param {string} username - Chosen username, must be unique.
+     * @param {string} password - User's password.
+     * @returns {Promise<boolean>} - True if the sign-in was successful (username was unique), else false.
+     */
+    public async signIn(displayName: string, username: string, password: string): Promise<boolean> {
+        const collection = this.db.returnCollection("ProfilesDB", "Profiles");
+        const existingUser = await collection.findOne({ Username: username });
+
+        if (!existingUser) {
             const hashPW = await bcrypt.hash(password, saltRounds);
-            let newProfile = new Profile(displayName, username, hashPW, this.db);
-            this.profileList.push( newProfile )
-            console.log("A new profile should be in the process of being created");
+            const newProfile = new Profile(displayName, username, hashPW, this.db);
+            this.profileList.push(newProfile);
+            // Optionally: Save new profile to DB here
             return true;
         }
-        
-        console.log( "The username was already being taken" );
-        return false;   //The username is already taken
+
+        return false;
     }
 
     /**
-     * Checks if the login information is correct and returns a session ID if true, or false if wrong.
-     * @param {string} username Username of the user attempting to log in
-     * @param {string} password Password of the user
-     * @returns {Promise<string | false>} A promise that resolves to the session ID if login is successful, or false if unsuccessful.
+     * Authenticates a user's login attempt using their username and password.
+     * If successful, generates and returns a session ID.
+     * @param {string} username - Username of the attempting user.
+     * @param {string} plainTextPassword - Password provided by the user.
+     * @returns {Promise<string | false>} - Session ID if authentication succeeds, else false.
      */
-    async login(username : string, plainTextPassword : string) {
-        const usersCollection = this.db.returnCollection("ProfilesDB", 'Profiles');
-        const sessionsCollection = this.db.returnCollection("ProfilesDB", 'Sessions');
-    
-        const user = await usersCollection.findOne({ Username: username });
-        if (user) {
-            // Compare provided password with the stored hash
-            const isMatch = await bcrypt.compare(plainTextPassword, user.Password);
-
-            if (isMatch) {
-                const sessionId = crypto.randomBytes(16).toString('hex');
-                await sessionsCollection.insertOne({
-                    sessionId,
-                    userId: user._id,
-                    createdAt: new Date(),
-                    expiresAt: new Date(Date.now() + (30 * 60 * 1000)), // 30 minute expiration
-                });
-    
-                // Return the sessionId for the client to use
-                return sessionId;
-            } 
-            else {
-                console.log("Checking if it got to false 1");
-                return false; // Password mismatch
-            }
-        } 
-        else {
-            console.log("Checking if it got to false 2");
-            return false; // User not found
+    public async login(username: string, plainTextPassword: string): Promise<string | false> {
+        const user = await this.db.returnCollection("ProfilesDB", 'Profiles').findOne({ Username: username });
+        if (user && await bcrypt.compare(plainTextPassword, user.Password)) {
+            const sessionId = crypto.randomBytes(16).toString('hex');
+            await this.db.returnCollection("ProfilesDB", 'Sessions').insertOne({
+                sessionId,
+                userId: user._id,
+                createdAt: new Date(),
+                expiresAt: new Date(Date.now() + 30 * 60 * 1000), // 30-minute expiration
+            });
+            return sessionId;
         }
+        return false;
     }
 
     /**
-     * Looks through all of the profiles in profileList and looks for any corresponding usernames to send back.
-     * @param username 
-     * @returns a profile obj with the username in the mongoDB
+     * Retrieves a user's profile based on their username.
+     * @param {string} username - Username of the profile to access.
+     * @returns {Profile | undefined} - The requested profile if found, else undefined.
      */
-    public async accessUser(username : string) {
-        for(var i = 0; i < this.profileList.length; i++) {
-            if( username == this.profileList[i].returnUsername() ) {
-                let copyProfile = this.profileList[i];
-                return copyProfile;
-            }
+    public async accessUser(username: string): Promise<Profile | undefined> {
+        return this.profileList.find(profile => profile.returnUsername() === username);
+    }
+
+    public async getProfileOrThrow(username: string): Promise<Profile> {
+        const profile = await this.accessUser(username);
+        if (!profile) {
+            throw new Error(`Profile not found for username: ${username}`);
         }
+        return profile;
     }
 
     /**
-     * This goes through each of the profiles in the profileList array and appends their username
-     * to an array to return so all of the user's can be accessed via their username
-     * @returns 
+     * Generates a list of usernames from the currently loaded profiles.
+     * @returns {string[]} - List of usernames.
      */
-    public returnProfileUsernames() {
-        let usernameList = new Array();
+    public returnProfileUsernames(): string[] {
+        return this.profileList.map(profile => profile.returnUsername());
+    }
 
-        for(var i = 0; i < this.profileList.length; i++) {
-            usernameList.push( this.profileList[i].username );
+    /**
+     * Deletes a user's profile based on their username.
+     * @param {string} username - Username of the user to delete.
+     * @returns {Promise<boolean>} - True if the profile was successfully deleted, else false.
+     */
+    public async deleteUser(username: string): Promise<boolean> {
+        const profilesCollection = this.db.returnCollection("ProfilesDB", "Profiles");
+
+        // Delete from MongoDB
+        const deleteResult = await profilesCollection.deleteOne({ Username: username });
+
+        if (deleteResult.deletedCount === 1) {
+            // Successfully deleted from MongoDB, now remove from profileList
+            this.profileList = this.profileList.filter(profile => profile.returnUsername() !== username);
+            return true;
         }
 
-        return usernameList;
+        // Profile not found or deletion unsuccessful
+        return false;
     }
 }

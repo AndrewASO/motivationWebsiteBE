@@ -96,6 +96,15 @@ export class Profile {
         this.db = mongo;
     }
 
+    /**
+     * Prepares a safe, serializable version of the profile.
+     */
+    // Custom toJSON method to exclude non-serializable properties
+    toJSON() {
+        const { db, ...serializableProps } = this;
+        return serializableProps;
+    }
+
 
     // Updated to reflect removal of the username requirement in TaskDoc
     async addTask(description: string) {
