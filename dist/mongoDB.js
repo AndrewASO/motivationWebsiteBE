@@ -2,8 +2,6 @@
 /**
  * This is for managing the connections to the mongoDB database.
  * This would involve modifying information, inputting information, removing information and retrieving information.
- * @Author Andrew Skevington-Olivera
- * @Date 14-1-24
  */
 var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
     function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }

@@ -3,8 +3,6 @@
  * This is for gathering information via webscrapping
  * There's the url that you can send along with a key word to scrap
  * for that information
- * @Author Andrew Skevington-Olivera
- * @Date 29-1-24
  */
 var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
     function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
@@ -28,7 +26,7 @@ const scrapeLinks = (url, keyword) => __awaiter(void 0, void 0, void 0, function
         const $ = cheerio_1.default.load(data);
         let results = primaryScrapingMethod($, keyword);
         if (results.length === 0) {
-            results = yield secondaryScrapingMethod('https://fanstranslations.com/novel/in-place-of-losing-my-memory-i-remembered-that-i-was-the-fiancee-of-the-capture-target/ajax/chapters/');
+            results = yield secondaryScrapingMethod(url);
         }
         return results;
     }

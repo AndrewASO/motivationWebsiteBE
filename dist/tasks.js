@@ -14,9 +14,12 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.calculateAndSaveCompletionPercentage = exports.CompletionStats = exports.Task = void 0;
 const mongoose_1 = __importDefault(require("mongoose"));
+const uuid_1 = require("uuid");
 const taskSchema = new mongoose_1.default.Schema({
+    id: { type: String, default: () => (0, uuid_1.v4)() },
     description: { type: String, required: true },
     completed: { type: Boolean, default: false },
+    urgency: { type: String, required: true }, // Assuming you've added this based on your plan
     date: { type: Date, default: Date.now },
 });
 const Task = mongoose_1.default.model('Task', taskSchema);

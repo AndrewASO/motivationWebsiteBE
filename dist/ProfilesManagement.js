@@ -1,8 +1,6 @@
 "use strict";
 /**
  *
- * @Author Andrew Skevington-Olivera
- * @Date 14-1-24
  */
 var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
     function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
@@ -140,6 +138,28 @@ class ProfileManagement {
             }
             // Profile not found or deletion unsuccessful
             return false;
+        });
+    }
+    /**
+     * Retrieves a Profile object associated with a given sessionID.
+     * @param {string} sessionId - The sessionID to look up the associated user.
+     * @returns {Promise<Profile | null>} - A Profile object if found, otherwise null.
+     */
+    sessionUserObject(sessionId) {
+        return __awaiter(this, void 0, void 0, function* () {
+            // Step 1: Query the session collection to find the session document by sessionId
+            const sessionCollection = this.db.returnCollection('ProfilesDB', 'Sessions');
+            const sessionDocument = yield sessionCollection.findOne({ sessionId: sessionId });
+            if (!sessionDocument)
+                return null; // No session found
+            // Step 2: Extract the userID from the session document
+            const userId = sessionDocument.userId;
+            // Step 3: Query the profile collection using the extracted userID
+            const userDocument = yield this.db.returnCollection('ProfilesDB', 'Profiles').findOne({ _id: userId });
+            if (!userDocument)
+                return null; // No user found for this session
+            // Assuming the Profile constructor is compatible with userDocument structure
+            return this.accessUser(userDocument.Username);
         });
     }
 }

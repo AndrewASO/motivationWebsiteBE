@@ -2,8 +2,6 @@
  * This is for gathering information via webscrapping
  * There's the url that you can send along with a key word to scrap 
  * for that information
- * @Author Andrew Skevington-Olivera
- * @Date 29-1-24
  */
 
 
@@ -27,7 +25,7 @@ export const scrapeLinks = async (url: string, keyword: string): Promise<LinkRes
         let results: LinkResult[] = primaryScrapingMethod($, keyword);
         
         if (results.length === 0) {
-            results = await secondaryScrapingMethod('https://fanstranslations.com/novel/in-place-of-losing-my-memory-i-remembered-that-i-was-the-fiancee-of-the-capture-target/ajax/chapters/');
+            results = await secondaryScrapingMethod(url);
         }
 
         return results;

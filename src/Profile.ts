@@ -1,13 +1,12 @@
 /**
  * This stores and modifies all of the information that would belong in profile.
  * There are two constructors and ones for signing in and the other one is for logging in.
- * @Author Andrew Skevington-Olivera
- * @Date 14-1-24
  */
 
 
 import { MongoDB } from "./mongoDB";
 import { Task, CompletionStats, calculateAndSaveCompletionPercentage, TaskDoc } from './tasks';
+import { v4 as uuidv4 } from 'uuid';
 
 const mongoose = require('mongoose');
 const bcrypt = require('bcrypt');
@@ -57,8 +56,9 @@ export class Profile {
     public async getUserDBInfo() {
         let collection = this.db.returnCollection("ProfilesDB", "Profiles");
         const doc = await collection.findOne( {Username : this.username} );
-
+        
         this.displayName = doc.DisplayName;
+        this.tasks = doc.Tasks;
     }
 
     /**
@@ -106,31 +106,44 @@ export class Profile {
     }
 
 
-    // Updated to reflect removal of the username requirement in TaskDoc
-    async addTask(description: string) {
+    // Updated to include unique ID generation for tasks and return the created task
+    async addTask(description: string): Promise<TaskDoc> {
         const newTask: TaskDoc = new Task({
+            id: uuidv4(), // Generate a unique ID for the new task
             description: description,
             completed: false,
+            urgency: 'daily', // Default urgency, adjust as needed
             date: new Date(),
         });
         this.tasks.push(newTask); // Add the new task to the local tasks array
-        await this.updateDB(); // Optionally, update the profile document in MongoDB
+        await this.updateDB(); // Update the profile document in MongoDB
+        return newTask; // Return the new task, including its ID
     }
 
-    // Method to delete a task within a profile
+    // Updated to use the task's unique ID for deletion
     async deleteTask(taskId: string): Promise<void> {
-        this.tasks = this.tasks.filter(task => task.id !== taskId); // Assuming each task has an 'id' property
-        await this.updateDB(); // If you're storing the modified profile back in MongoDB
+        this.tasks = this.tasks.filter(task => task.id !== taskId);
+        await this.updateDB(); // Update the profile document in MongoDB
     }
 
-    // Method to complete a task
-    async completeTask(taskDescription: string) {
-        const task = this.tasks.find(task => task.description === taskDescription);
+    // Updated to use the task's unique ID for marking as complete
+    async completeTask(taskId: string) {
+        const task = this.tasks.find(task => task.id === taskId);
         if (task) {
             task.completed = true;
             await this.updateDB();
         }
     }
+
+    // Function to update the urgency of an existing task
+    async updateTaskUrgency(taskId: string, newUrgency: 'yearly' | 'monthly' | 'weekly' | 'daily') {
+        const task = this.tasks.find(task => task.id === taskId);
+        if (task) {
+            task.urgency = newUrgency; // Update the task's urgency
+            await this.updateDB(); // Save the updated tasks array to the database
+        }
+    }
+
 
     // Method to calculate and save completion percentage for a specific date
     async calculateAndSaveCompletionPercentage(): Promise<number> {

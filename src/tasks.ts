@@ -2,10 +2,13 @@
 
 
 import mongoose, { Document } from 'mongoose';
+import { v4 as uuidv4 } from 'uuid';
 
 interface TaskDoc extends Document {
+  id: string;
   description: string;
   completed: boolean;
+  urgency: string;
   date: Date;
 }
 
@@ -15,8 +18,10 @@ interface CompletionStatsDoc extends Document {
 }
 
 const taskSchema = new mongoose.Schema({
+  id: { type: String, default: () => uuidv4() },
   description: { type: String, required: true },
   completed: { type: Boolean, default: false },
+  urgency: { type: String, required: true }, // Assuming you've added this based on your plan
   date: { type: Date, default: Date.now },
 });
 

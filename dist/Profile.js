@@ -2,8 +2,6 @@
 /**
  * This stores and modifies all of the information that would belong in profile.
  * There are two constructors and ones for signing in and the other one is for logging in.
- * @Author Andrew Skevington-Olivera
- * @Date 14-1-24
  */
 var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
     function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
@@ -28,6 +26,7 @@ var __rest = (this && this.__rest) || function (s, e) {
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.Profile = void 0;
 const tasks_1 = require("./tasks");
+const uuid_1 = require("uuid");
 const mongoose = require('mongoose');
 const bcrypt = require('bcrypt');
 const saltRounds = 10;
@@ -66,6 +65,7 @@ class Profile {
             let collection = this.db.returnCollection("ProfilesDB", "Profiles");
             const doc = yield collection.findOne({ Username: this.username });
             this.displayName = doc.DisplayName;
+            this.tasks = doc.Tasks;
         });
     }
     /**
@@ -106,32 +106,45 @@ class Profile {
         const _a = this, { db } = _a, serializableProps = __rest(_a, ["db"]);
         return serializableProps;
     }
-    // Updated to reflect removal of the username requirement in TaskDoc
+    // Updated to include unique ID generation for tasks and return the created task
     addTask(description) {
         return __awaiter(this, void 0, void 0, function* () {
             const newTask = new tasks_1.Task({
+                id: (0, uuid_1.v4)(), // Generate a unique ID for the new task
                 description: description,
                 completed: false,
+                urgency: 'daily', // Default urgency, adjust as needed
                 date: new Date(),
             });
             this.tasks.push(newTask); // Add the new task to the local tasks array
-            yield this.updateDB(); // Optionally, update the profile document in MongoDB
+            yield this.updateDB(); // Update the profile document in MongoDB
+            return newTask; // Return the new task, including its ID
         });
     }
-    // Method to delete a task within a profile
+    // Updated to use the task's unique ID for deletion
     deleteTask(taskId) {
         return __awaiter(this, void 0, void 0, function* () {
-            this.tasks = this.tasks.filter(task => task.id !== taskId); // Assuming each task has an 'id' property
-            yield this.updateDB(); // If you're storing the modified profile back in MongoDB
+            this.tasks = this.tasks.filter(task => task.id !== taskId);
+            yield this.updateDB(); // Update the profile document in MongoDB
         });
     }
-    // Method to complete a task
-    completeTask(taskDescription) {
+    // Updated to use the task's unique ID for marking as complete
+    completeTask(taskId) {
         return __awaiter(this, void 0, void 0, function* () {
-            const task = this.tasks.find(task => task.description === taskDescription);
+            const task = this.tasks.find(task => task.id === taskId);
             if (task) {
                 task.completed = true;
                 yield this.updateDB();
+            }
+        });
+    }
+    // Function to update the urgency of an existing task
+    updateTaskUrgency(taskId, newUrgency) {
+        return __awaiter(this, void 0, void 0, function* () {
+            const task = this.tasks.find(task => task.id === taskId);
+            if (task) {
+                task.urgency = newUrgency; // Update the task's urgency
+                yield this.updateDB(); // Save the updated tasks array to the database
             }
         });
     }
