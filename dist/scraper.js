@@ -37,13 +37,24 @@ const scrapeLinks = (url, keyword) => __awaiter(void 0, void 0, void 0, function
 });
 exports.scrapeLinks = scrapeLinks;
 function primaryScrapingMethod($, keyword) {
+    const linkSelectors = [
+        // Combined selectors array
+        'ul.row-content-chapter li a.chapter-name',
+        'a[href]', 'ul li a', 'ol li a', 'div a', 'section a', 'nav a', 'footer a',
+        'article a', 'aside a', '.link-class', '#link-id', 'p a',
+        'h1 a', 'h2 a', 'h3 a', 'h4 a', 'h5 a', 'h6 a', '.navigation a',
+        '.footer-links a', 'table a', '.content a', '.main-content a',
+        '.sidebar a', '.post a'
+    ];
     const results = [];
-    $('ul.row-content-chapter li a.chapter-name').each((index, element) => {
-        const title = $(element).text().trim();
-        const link = $(element).attr('href');
-        if (link && title.toLowerCase().includes(keyword.toLowerCase())) {
-            results.push({ title, link });
-        }
+    linkSelectors.forEach((selector) => {
+        $(selector).each((_, element) => {
+            const title = $(element).text().trim();
+            const link = $(element).attr('href');
+            if (title.toLowerCase().includes(keyword.toLowerCase()) && link) {
+                results.push({ title, link });
+            }
+        });
     });
     return results;
 }

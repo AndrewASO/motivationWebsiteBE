@@ -19,6 +19,7 @@ exports.startServer = void 0;
 const ProfilesManagement_1 = require("./ProfilesManagement");
 const mongoDB_1 = require("./mongoDB");
 const scraper_1 = require("./scraper");
+const gpt_1 = require("./gpt");
 const dotenv_1 = __importDefault(require("dotenv"));
 const express_1 = __importDefault(require("express"));
 const cors_1 = __importDefault(require("cors"));
@@ -26,6 +27,7 @@ dotenv_1.default.config();
 const dbURL = process.env.mongoDB_URL;
 function startServer() {
     return __awaiter(this, void 0, void 0, function* () {
+        const gpt = new gpt_1.GPT();
         const server = (0, express_1.default)();
         server.use((0, cors_1.default)({
             allowedHeaders: "*"
@@ -106,34 +108,43 @@ function startServer() {
             //const test2 = await scrapeLinks("https://fanstranslations.com/novel/i-was-a-small-fish-when-i-reincarnated-but-it-seems-that-i-can-become-a-dragon-so-i-will-do-my-best/", "chapter");
             res.send(test1);
         }));
+        /**
+         * This is the novels API test
+         */
+        server.get('/novel/chapters', (req, res) => __awaiter(this, void 0, void 0, function* () {
+            const link = req.query.Link;
+            const chapterLinks = yield (0, scraper_1.scrapeLinks)(link, "chapter");
+            res.send(chapterLinks);
+        }));
         // Endpoint to add a new task
         server.post('/tasks/add', (req, res) => __awaiter(this, void 0, void 0, function* () {
-            const { username, description } = req.body; // Assuming tasks are added via profile ID now
+            const { username, description, urgency } = req.body; // Assuming tasks are added via profile ID now
             try {
                 let profile = yield profileManagement.accessUser(username); // Adjusted to access by ID
                 if (!profile) {
                     return res.status(404).send({ error: "Profile not found" });
                 }
-                yield profile.addTask(description);
+                yield profile.addTask(description, urgency);
                 res.status(201).send({ message: "Task added successfully" });
             }
             catch (error) {
                 res.status(400).send({ error: "Failed to add task", details: error instanceof Error ? error.toString() : String(error) });
             }
         }));
-        // Endpoint to complete a task - Update to use taskId instead of description
-        server.post('/tasks/complete', (req, res) => __awaiter(this, void 0, void 0, function* () {
-            const { username, taskId } = req.body; // Now using taskId for identification
+        // Endpoint to toggle a task's completion status
+        server.post('/tasks/toggle-completion', (req, res) => __awaiter(this, void 0, void 0, function* () {
+            const { username, taskId } = req.body;
             try {
                 let profile = yield profileManagement.accessUser(username);
                 if (!profile) {
                     return res.status(404).send({ error: "Profile not found" });
                 }
-                yield profile.completeTask(taskId); // Use taskId to find and complete the task
-                res.status(200).send({ message: "Task completed successfully" });
+                // Use the updated function name that reflects its new functionality
+                yield profile.toggleTaskCompletion(taskId);
+                res.status(200).send({ message: "Task completion status toggled successfully" });
             }
             catch (error) {
-                res.status(400).send({ error: "Failed to complete task", details: error.toString() });
+                res.status(400).send({ error: "Failed to toggle task completion status", details: error.toString() });
             }
         }));
         // Endpoint to retrieve user's tasks
@@ -194,6 +205,20 @@ function startServer() {
             }
             catch (error) {
                 res.status(400).send({ error: "Failed to update task urgency", details: error instanceof Error ? error.toString() : String(error) });
+            }
+        }));
+        server.post('/ask-gpt', (req, res) => __awaiter(this, void 0, void 0, function* () {
+            try {
+                const { query } = req.body;
+                if (!query) {
+                    return res.status(400).send({ error: 'Query is required' });
+                }
+                const response = yield gpt.sendMessage(query);
+                res.send({ response });
+            }
+            catch (error) {
+                console.error('Error processing GPT request:', error);
+                res.status(500).send({ error: 'Failed to process your request' });
             }
         }));
         server.listen(3000);

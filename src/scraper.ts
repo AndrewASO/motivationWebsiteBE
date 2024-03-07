@@ -35,18 +35,33 @@ export const scrapeLinks = async (url: string, keyword: string): Promise<LinkRes
     }
 };
 
-function primaryScrapingMethod($: any, keyword: string): LinkResult[] {
-    const results: LinkResult[] = [];
-    $('ul.row-content-chapter li a.chapter-name').each((index: number, element: Element) => {
-        const title = $(element).text().trim();
-        const link = $(element).attr('href');
+function primaryScrapingMethod($: any, keyword: string): LinkResult[] { // Changed CheerioStatic to any
+    const linkSelectors = [
+        // Combined selectors array
+        'ul.row-content-chapter li a.chapter-name',
+        'a[href]', 'ul li a', 'ol li a', 'div a', 'section a', 'nav a', 'footer a',
+        'article a', 'aside a', '.link-class', '#link-id', 'p a',
+        'h1 a', 'h2 a', 'h3 a', 'h4 a', 'h5 a', 'h6 a', '.navigation a',
+        '.footer-links a', 'table a', '.content a', '.main-content a',
+        '.sidebar a', '.post a'
+    ];
 
-        if (link && title.toLowerCase().includes(keyword.toLowerCase())) {
-            results.push({ title, link });
-        }
+    const results: LinkResult[] = [];
+
+    linkSelectors.forEach((selector) => {
+        $(selector).each((_: any, element: any) => { // Using _ for unused index, and added any type for element
+            const title = $(element).text().trim();
+            const link = $(element).attr('href');
+
+            if (title.toLowerCase().includes(keyword.toLowerCase()) && link) {
+                results.push({ title, link });
+            }
+        });
     });
+
     return results;
 }
+
 
 //I need to change this for working w the fantranslations website and it could be any link or if its fantranslations
 //then it'll go straight to this 

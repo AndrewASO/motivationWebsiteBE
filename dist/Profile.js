@@ -107,13 +107,13 @@ class Profile {
         return serializableProps;
     }
     // Updated to include unique ID generation for tasks and return the created task
-    addTask(description) {
+    addTask(description, urgency) {
         return __awaiter(this, void 0, void 0, function* () {
             const newTask = new tasks_1.Task({
                 id: (0, uuid_1.v4)(), // Generate a unique ID for the new task
                 description: description,
                 completed: false,
-                urgency: 'daily', // Default urgency, adjust as needed
+                urgency: urgency, // Default urgency, adjust as needed
                 date: new Date(),
             });
             this.tasks.push(newTask); // Add the new task to the local tasks array
@@ -128,12 +128,13 @@ class Profile {
             yield this.updateDB(); // Update the profile document in MongoDB
         });
     }
-    // Updated to use the task's unique ID for marking as complete
-    completeTask(taskId) {
+    // Updated to toggle the completion status of a task based on its unique ID
+    toggleTaskCompletion(taskId) {
         return __awaiter(this, void 0, void 0, function* () {
             const task = this.tasks.find(task => task.id === taskId);
             if (task) {
-                task.completed = true;
+                task.completed = !task.completed; // Toggle the completion status
+                //task.completed = false;
                 yield this.updateDB();
             }
         });

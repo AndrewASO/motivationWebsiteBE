@@ -107,12 +107,12 @@ export class Profile {
 
 
     // Updated to include unique ID generation for tasks and return the created task
-    async addTask(description: string): Promise<TaskDoc> {
+    async addTask(description: string, urgency: 'yearly' | 'monthly' | 'weekly' | 'daily'): Promise<TaskDoc> {
         const newTask: TaskDoc = new Task({
             id: uuidv4(), // Generate a unique ID for the new task
             description: description,
             completed: false,
-            urgency: 'daily', // Default urgency, adjust as needed
+            urgency: urgency, // Default urgency, adjust as needed
             date: new Date(),
         });
         this.tasks.push(newTask); // Add the new task to the local tasks array
@@ -126,14 +126,17 @@ export class Profile {
         await this.updateDB(); // Update the profile document in MongoDB
     }
 
-    // Updated to use the task's unique ID for marking as complete
-    async completeTask(taskId: string) {
+    // Updated to toggle the completion status of a task based on its unique ID
+    async toggleTaskCompletion(taskId: string) {
         const task = this.tasks.find(task => task.id === taskId);
         if (task) {
-            task.completed = true;
+            task.completed = !task.completed; // Toggle the completion status
+            //task.completed = false;
             await this.updateDB();
         }
     }
+
+
 
     // Function to update the urgency of an existing task
     async updateTaskUrgency(taskId: string, newUrgency: 'yearly' | 'monthly' | 'weekly' | 'daily') {

@@ -7,18 +7,19 @@ import { ProfileManagement } from "./ProfilesManagement";
 import { MongoDB } from "./mongoDB";
 import { scrapeLinks, scrapeText } from "./scraper";
 import { Task, CompletionStats, calculateAndSaveCompletionPercentage } from './tasks';
+import { GPT } from "./gpt";
 import dotenv from 'dotenv';
 
 import express from "express"
 import cors from 'cors';
 import {Request, Response, NextFunction} from 'express';
 
-
 dotenv.config()
 const dbURL = process.env.mongoDB_URL as string;
 
 
 export async function startServer() {
+  const gpt = new GPT();
   const server = express();
   server.use(cors({
       allowedHeaders: "*"
@@ -106,36 +107,48 @@ export async function startServer() {
     res.send(test1);
   } )
 
+  /**
+   * This is the novels API test
+   */
+  server.get('/novel/chapters', async (req: Request, res: Response) => {
+    const link = req.query.Link as string;
+
+    const chapterLinks = await scrapeLinks(link, "chapter");
+    res.send(chapterLinks);
+  } )
+
 
   // Endpoint to add a new task
   server.post('/tasks/add', async (req, res) => {
-    const { username, description } = req.body; // Assuming tasks are added via profile ID now
+    const { username, description, urgency } = req.body; // Assuming tasks are added via profile ID now
     try {
       let profile = await profileManagement.accessUser(username); // Adjusted to access by ID
       if (!profile) {
         return res.status(404).send({ error: "Profile not found" });
       }
-      await profile.addTask(description);
+      await profile.addTask(description, urgency);
       res.status(201).send({ message: "Task added successfully" });
     } catch (error) {
       res.status(400).send({ error: "Failed to add task", details: error instanceof Error ? error.toString() : String(error) });
     }
   });
 
-  // Endpoint to complete a task - Update to use taskId instead of description
-  server.post('/tasks/complete', async (req, res) => {
-    const { username, taskId } = req.body; // Now using taskId for identification
+  // Endpoint to toggle a task's completion status
+  server.post('/tasks/toggle-completion', async (req, res) => {
+    const { username, taskId } = req.body;
     try {
       let profile = await profileManagement.accessUser(username);
       if (!profile) {
         return res.status(404).send({ error: "Profile not found" });
       }
-      await profile.completeTask(taskId); // Use taskId to find and complete the task
-      res.status(200).send({ message: "Task completed successfully" });
+      // Use the updated function name that reflects its new functionality
+      await profile.toggleTaskCompletion(taskId);
+      res.status(200).send({ message: "Task completion status toggled successfully" });
     } catch (error) {
-      res.status(400).send({ error: "Failed to complete task", details: (error as Error).toString() });
+      res.status(400).send({ error: "Failed to toggle task completion status", details: (error as Error).toString() });
     }
   });
+
 
   // Endpoint to retrieve user's tasks
   server.get('/tasks', async (req, res) => {
@@ -194,6 +207,23 @@ export async function startServer() {
       res.status(200).send({ message: "Task urgency updated successfully" });
     } catch (error) {
       res.status(400).send({ error: "Failed to update task urgency", details: error instanceof Error ? error.toString() : String(error) });
+    }
+  });
+
+
+
+  server.post('/ask-gpt', async (req, res) => {
+    try {
+      const { query } = req.body;
+      if (!query) {
+        return res.status(400).send({ error: 'Query is required' });
+      }
+  
+      const response = await gpt.sendMessage(query);
+      res.send({ response });
+    } catch (error) {
+      console.error('Error processing GPT request:', error);
+      res.status(500).send({ error: 'Failed to process your request' });
     }
   });
 
