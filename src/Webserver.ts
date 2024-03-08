@@ -103,7 +103,6 @@ export async function startServer() {
   server.get('/novelTest', async (req: Request, res: Response) => {
     //This was mostly used to see if I could work with another websites API
     const test1 = await scrapeLinks("https://fanstranslations.com/novel/in-place-of-losing-my-memory-i-remembered-that-i-was-the-fiancee-of-the-capture-target/ajax/chapters/", "chapter");
-    //const test2 = await scrapeLinks("https://fanstranslations.com/novel/i-was-a-small-fish-when-i-reincarnated-but-it-seems-that-i-can-become-a-dragon-so-i-will-do-my-best/", "chapter");
     res.send(test1);
   } )
 
@@ -225,17 +224,7 @@ export async function startServer() {
       console.error('Error processing GPT request:', error);
       res.status(500).send({ error: 'Failed to process your request' });
     }
-  });
-
-
-
-
-
-
-
-    
-
-  
+  });  
 
   server.listen(3000);
 }

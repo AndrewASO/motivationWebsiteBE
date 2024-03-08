@@ -22,8 +22,9 @@ describe('Task Management', () => {
   });
 
   it('can add tasks to a profile', async () => {
-    await profile.addTask("Test Task 1");
-    await profile.addTask("Test Task 4");
+    // Add 'urgency' parameter
+    await profile.addTask("Test Task 1", 'daily');
+    await profile.addTask("Test Task 4", 'weekly');
 
     const tasks = profile.getProfileTasks();
 
@@ -35,39 +36,40 @@ describe('Task Management', () => {
   });
 
   it('can complete a task', async () => {
-    const newTask1 = await profile.addTask("Complete Me"); // Assuming addTask now returns the new task
+    // Assuming addTask now returns the new task
+    const newTask1 = await profile.addTask("Complete Me", 'monthly');
     const taskId = newTask1.id; // Capture the ID of the newly added task
 
-    await profile.completeTask(taskId); // Use the ID to complete the task
+    // Use toggleTaskCompletion or the correct method to mark the task as completed
+    await profile.toggleTaskCompletion(taskId);
 
     const tasks = profile.getProfileTasks();
-    const completedTask = tasks.find(task => task.id === taskId); // Find the task by ID
+    const completedTask = tasks.find(task => task.id === taskId);
 
     expect(completedTask).toBeDefined();
     expect(completedTask?.completed).toBe(true);
 
-    await profile.resetTasks(); // Reset/clear tasks after the test
+    await profile.resetTasks();
   });
-
 
   it('calculates completion percentage correctly', async () => {
     await profile.resetTasks();
 
-    const task1 = await profile.addTask("Task 1");
-    await profile.addTask("Task 2"); // No need to capture this task's ID if not using it
-    await profile.completeTask(task1.id); // Use the ID to complete the first task
+    // Add 'urgency' parameter
+    const task1 = await profile.addTask("Task 1", 'daily');
+    await profile.addTask("Task 2", 'yearly');
+    await profile.toggleTaskCompletion(task1.id);
 
     const completionPercentage = await profile.calculateAndSaveCompletionPercentage();
 
-    expect(completionPercentage).toBe(50); // Assuming 1 out of 2 tasks is completed
+    expect(completionPercentage).toBe(50);
 
-    await profile.resetTasks(); // Clean up by resetting tasks after the test
+    await profile.resetTasks();
   });
-
 
   it('Clears the tasks', async () => {
     await profile.resetTasks();
   });
 
-  // Add more test cases as needed...
+  // Continue with other tests...
 });
