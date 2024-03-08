@@ -210,6 +210,38 @@ export async function startServer() {
   });
 
 
+  // Endpoint to get task completion percentage by urgency
+  server.get('/tasks/completion-percentage', async (req, res) => {
+    const { username, urgency } = req.query;
+
+    // Validate username and urgency are provided and are strings
+    if (typeof username !== 'string' || typeof urgency !== 'string') {
+      return res.status(400).send({ error: "Invalid or missing username and/or urgency" });
+    }
+
+    // Validate urgency is one of the expected values
+    const validUrgencies = ['yearly', 'monthly', 'weekly', 'daily'];
+    if (!validUrgencies.includes(urgency)) {
+      return res.status(400).send({ error: "Invalid urgency value" });
+    }
+
+    try {
+      let profile = await profileManagement.accessUser(username);
+      if (!profile) {
+        return res.status(404).send({ error: "Profile not found" });
+      }
+      // Cast urgency to the correct type since it's already validated
+      const completionPercentage = await profile.calculateAndSaveCompletionPercentage(urgency as 'yearly' | 'monthly' | 'weekly' | 'daily');
+      res.status(200).send({ urgency, completionPercentage });
+    } catch (error) {
+      res.status(400).send({ error: "Failed to calculate completion percentage", details: error instanceof Error ? error.toString() : String(error) });
+    }
+  });
+
+
+
+
+
 
   server.post('/ask-gpt', async (req, res) => {
     try {
