@@ -148,10 +148,11 @@ export class Profile {
     }
 
 
-    // Method to calculate and save completion percentage for a specific date
-    async calculateAndSaveCompletionPercentage(): Promise<number> {
-        return await calculateAndSaveCompletionPercentage(this.tasks);
+    // Updated to allow specifying urgency for calculating completion percentage
+    async calculateAndSaveCompletionPercentage(urgency: 'yearly' | 'monthly' | 'weekly' | 'daily'): Promise<number> {
+        return await calculateAndSaveCompletionPercentage(this.tasks, urgency);
     }
+
 
     public getProfileTasks(): TaskDoc[] {
         return this.tasks;

@@ -58,9 +58,10 @@ describe('Task Management', () => {
     // Add 'urgency' parameter
     const task1 = await profile.addTask("Task 1", 'daily');
     await profile.addTask("Task 2", 'yearly');
+    await profile.addTask("Task 3", 'daily');
     await profile.toggleTaskCompletion(task1.id);
 
-    const completionPercentage = await profile.calculateAndSaveCompletionPercentage();
+    const completionPercentage = await profile.calculateAndSaveCompletionPercentage('daily');
 
     expect(completionPercentage).toBe(50);
 

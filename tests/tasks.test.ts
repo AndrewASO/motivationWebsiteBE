@@ -63,17 +63,17 @@ describe('Task Management Tests', () => {
     });
   });
 
-  it('calculates completion percentage correctly', async () => {
-    // Adjusted tasks: TaskDoc[] to remove username
+  it('calculates completion percentage correctly for weekly tasks', async () => {
     const tasks: TaskDoc[] = [
-      { completed: true, description: 'Task 1', date: new Date() } as TaskDoc,
-      { completed: false, description: 'Task 2', date: new Date() } as TaskDoc,
+      { completed: true, description: 'Task 1', urgency: 'weekly', date: new Date() } as TaskDoc,
+      { completed: false, description: 'Task 2', urgency: 'weekly', date: new Date() } as TaskDoc,
     ];
 
-    // Calculate completion percentage
-    const completionPercentage = await calculateAndSaveCompletionPercentage(tasks);
+    // Specify 'weekly' urgency in the calculation
+    const completionPercentage = await calculateAndSaveCompletionPercentage(tasks, 'weekly');
 
     // Assertions
-    expect(completionPercentage).toBe(50); // Assuming one out of two tasks is completed
+    expect(completionPercentage).toBe(50); // Assuming one out of two weekly tasks is completed
   });
+
 });
