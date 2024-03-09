@@ -105,7 +105,6 @@ function startServer() {
         server.get('/novelTest', (req, res) => __awaiter(this, void 0, void 0, function* () {
             //This was mostly used to see if I could work with another websites API
             const test1 = yield (0, scraper_1.scrapeLinks)("https://fanstranslations.com/novel/in-place-of-losing-my-memory-i-remembered-that-i-was-the-fiancee-of-the-capture-target/ajax/chapters/", "chapter");
-            //const test2 = await scrapeLinks("https://fanstranslations.com/novel/i-was-a-small-fish-when-i-reincarnated-but-it-seems-that-i-can-become-a-dragon-so-i-will-do-my-best/", "chapter");
             res.send(test1);
         }));
         /**
@@ -113,8 +112,20 @@ function startServer() {
          */
         server.get('/novel/chapters', (req, res) => __awaiter(this, void 0, void 0, function* () {
             const link = req.query.Link;
-            const chapterLinks = yield (0, scraper_1.scrapeLinks)(link, "chapter");
-            res.send(chapterLinks);
+            try {
+                const chapterLinks = yield (0, scraper_1.scrapeLinks)(link, "chapter");
+                if (chapterLinks.length === 0) {
+                    // You can decide how you want to handle an empty response, e.g., send a 404 or a custom message
+                    res.status(404).send({ error: "No chapters found or link is invalid." });
+                }
+                else {
+                    res.send(chapterLinks);
+                }
+            }
+            catch (error) {
+                // Handle unexpected errors
+                res.status(500).send({ error: "An unexpected error occurred." });
+            }
         }));
         // Endpoint to add a new task
         server.post('/tasks/add', (req, res) => __awaiter(this, void 0, void 0, function* () {
@@ -205,6 +216,31 @@ function startServer() {
             }
             catch (error) {
                 res.status(400).send({ error: "Failed to update task urgency", details: error instanceof Error ? error.toString() : String(error) });
+            }
+        }));
+        // Endpoint to get task completion percentage by urgency
+        server.get('/tasks/completion-percentage', (req, res) => __awaiter(this, void 0, void 0, function* () {
+            const { username, urgency } = req.query;
+            // Validate username and urgency are provided and are strings
+            if (typeof username !== 'string' || typeof urgency !== 'string') {
+                return res.status(400).send({ error: "Invalid or missing username and/or urgency" });
+            }
+            // Validate urgency is one of the expected values
+            const validUrgencies = ['yearly', 'monthly', 'weekly', 'daily'];
+            if (!validUrgencies.includes(urgency)) {
+                return res.status(400).send({ error: "Invalid urgency value" });
+            }
+            try {
+                let profile = yield profileManagement.accessUser(username);
+                if (!profile) {
+                    return res.status(404).send({ error: "Profile not found" });
+                }
+                // Cast urgency to the correct type since it's already validated
+                const completionPercentage = yield profile.calculateAndSaveCompletionPercentage(urgency);
+                res.status(200).send({ urgency, completionPercentage });
+            }
+            catch (error) {
+                res.status(400).send({ error: "Failed to calculate completion percentage", details: error instanceof Error ? error.toString() : String(error) });
             }
         }));
         server.post('/ask-gpt', (req, res) => __awaiter(this, void 0, void 0, function* () {

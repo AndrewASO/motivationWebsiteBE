@@ -149,10 +149,10 @@ class Profile {
             }
         });
     }
-    // Method to calculate and save completion percentage for a specific date
-    calculateAndSaveCompletionPercentage() {
+    // Updated to allow specifying urgency for calculating completion percentage
+    calculateAndSaveCompletionPercentage(urgency) {
         return __awaiter(this, void 0, void 0, function* () {
-            return yield (0, tasks_1.calculateAndSaveCompletionPercentage)(this.tasks);
+            return yield (0, tasks_1.calculateAndSaveCompletionPercentage)(this.tasks, urgency);
         });
     }
     getProfileTasks() {

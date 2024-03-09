@@ -30,12 +30,19 @@ const completionStatsSchema = new mongoose_1.default.Schema({
 });
 const CompletionStats = mongoose_1.default.model('CompletionStats', completionStatsSchema);
 exports.CompletionStats = CompletionStats;
-// Modify the function to accept TaskDoc[]
-const calculateAndSaveCompletionPercentage = (tasks) => __awaiter(void 0, void 0, void 0, function* () {
-    const completedTasks = tasks.filter(task => task.completed).length;
-    const completionPercentage = tasks.length > 0 ? (completedTasks / tasks.length) * 100 : 0;
+/**
+ * Calculates and returns the completion percentage for tasks with the specified urgency.
+ * @param tasks The list of tasks to calculate completion percentage for.
+ * @param urgency The urgency level ('yearly', 'monthly', 'weekly', 'daily') to filter tasks by.
+ * @returns The completion percentage of tasks with the specified urgency.
+ */
+const calculateAndSaveCompletionPercentage = (tasks, urgency) => __awaiter(void 0, void 0, void 0, function* () {
+    // Filter tasks by the specified urgency
+    const filteredTasks = tasks.filter(task => task.urgency === urgency);
+    // Calculate the completion percentage for filtered tasks
+    const completedTasks = filteredTasks.filter(task => task.completed).length;
+    const completionPercentage = filteredTasks.length > 0 ? (completedTasks / filteredTasks.length) * 100 : 0;
     // For simplicity, return the calculated percentage directly
-    // In real scenarios, you might want to save this value to a database or do further processing
     return completionPercentage;
 });
 exports.calculateAndSaveCompletionPercentage = calculateAndSaveCompletionPercentage;

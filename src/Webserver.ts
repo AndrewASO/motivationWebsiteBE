@@ -96,25 +96,26 @@ export async function startServer() {
     }
   });
 
-
-  /**
-   * This is the novels API test
-   */
-  server.get('/novelTest', async (req: Request, res: Response) => {
-    //This was mostly used to see if I could work with another websites API
-    const test1 = await scrapeLinks("https://fanstranslations.com/novel/in-place-of-losing-my-memory-i-remembered-that-i-was-the-fiancee-of-the-capture-target/ajax/chapters/", "chapter");
-    res.send(test1);
-  } )
-
   /**
    * This is the novels API test
    */
   server.get('/novel/chapters', async (req: Request, res: Response) => {
     const link = req.query.Link as string;
 
-    const chapterLinks = await scrapeLinks(link, "chapter");
-    res.send(chapterLinks);
-  } )
+    try {
+        const chapterLinks = await scrapeLinks(link, "chapter");
+        if (chapterLinks.length === 0) {
+            // You can decide how you want to handle an empty response, e.g., send a 404 or a custom message
+            res.status(404).send({ error: "No chapters found or link is invalid." });
+        } else {
+            res.send(chapterLinks);
+        }
+    } catch (error) {
+        // Handle unexpected errors
+        res.status(500).send({ error: "An unexpected error occurred." });
+    }
+});
+
 
 
   // Endpoint to add a new task
