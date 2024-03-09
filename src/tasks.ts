@@ -1,3 +1,10 @@
+/**
+ * This module defines the schema for task and completion statistics documents using Mongoose, facilitating
+ * interaction with MongoDB for task management and analysis. It includes models for both tasks and completion
+ * statistics, each with their respective fields and types. The `calculateAndSaveCompletionPercentage` function
+ * provides a means to calculate the completion percentage of tasks filtered by their urgency levels, demonstrating
+ * an approach to data analysis within the application's task management context.
+ */
 
 
 

@@ -1,12 +1,16 @@
 /**
- * 
+ * This module defines a web server that serves as the backend for a novel-related application.
+ * It includes endpoints for user profile management, novel chapters scraping, task management,
+ * and interaction with the GPT model. The server utilizes express.js for routing and supports
+ * CORS for cross-origin requests. It integrates MongoDB for data persistence and leverages
+ * custom utility modules for specific functionalities like scraping web content and generating
+ * GPT responses.
  */
 
 
 import { ProfileManagement } from "./ProfilesManagement";
 import { MongoDB } from "./mongoDB";
 import { scrapeLinks, scrapeText } from "./scraper";
-import { Task, CompletionStats, calculateAndSaveCompletionPercentage } from './tasks';
 import { GPT } from "./gpt";
 import dotenv from 'dotenv';
 
@@ -238,12 +242,9 @@ export async function startServer() {
       res.status(400).send({ error: "Failed to calculate completion percentage", details: error instanceof Error ? error.toString() : String(error) });
     }
   });
+  
 
-
-
-
-
-
+  // Endpoint to send messages to gpt model
   server.post('/ask-gpt', async (req, res) => {
     try {
       const { query } = req.body;

@@ -1,6 +1,11 @@
 /**
- * 
+ * ProfileManagement handles all operations related to user profile management,
+ * including sign-in, login, user retrieval, and profile deletion. It integrates with MongoDB
+ * for persistence, offering methods to interact with the profile and session data stored in the database.
+ * This class ensures secure handling of user passwords using bcrypt for hashing and provides
+ * session management functionalities to maintain user sessions.
  */
+
 
 import { MongoDB } from "./mongoDB";
 import { Profile } from "./Profile";

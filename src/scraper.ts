@@ -1,7 +1,6 @@
 /**
- * This is for gathering information via webscrapping
- * There's the url that you can send along with a key word to scrap 
- * for that information
+ * This module provides functions for web scraping, enabling the retrieval of links and texts from specified URLs.
+ * It utilizes axios for HTTP requests and cheerio for parsing and manipulating HTML.
  */
 
 
@@ -17,6 +16,12 @@ interface TextResult {
     text: string;
 }
 
+/**
+ * Asynchronously scrapes links from a given URL based on a specified keyword.
+ * @param url The URL from which to scrape links.
+ * @param keyword A keyword to filter the links by.
+ * @returns A promise that resolves to an array of LinkResults.
+ */
 export const scrapeLinks = async (url: string, keyword: string): Promise<LinkResult[]> => {
     try {
         const { data } = await axios.get(url);
@@ -35,6 +40,13 @@ export const scrapeLinks = async (url: string, keyword: string): Promise<LinkRes
     }
 };
 
+
+/**
+ * Primary method for scraping links using predefined selectors.
+ * @param $ A loaded cheerio instance to query the DOM.
+ * @param keyword A keyword to filter the links by.
+ * @returns An array of LinkResults.
+ */
 function primaryScrapingMethod($: any, keyword: string): LinkResult[] { // Changed CheerioStatic to any
     const linkSelectors = [
         // Combined selectors array
@@ -63,8 +75,11 @@ function primaryScrapingMethod($: any, keyword: string): LinkResult[] { // Chang
 }
 
 
-//I need to change this for working w the fantranslations website and it could be any link or if its fantranslations
-//then it'll go straight to this 
+/**
+ * Secondary method for scraping, potentially using different logic or selectors based on the URL structure.
+ * @param postUrl The URL to scrape using the secondary method.
+ * @returns A promise that resolves to an array of LinkResults.
+ */
 async function secondaryScrapingMethod(postUrl: string): Promise<LinkResult[]> {
     try {
         const headers = {
@@ -90,9 +105,12 @@ async function secondaryScrapingMethod(postUrl: string): Promise<LinkResult[]> {
     }
 }
 
-
-
-
+/**
+ * Asynchronously scrapes text from a given URL based on a specified keyword.
+ * @param url The URL from which to scrape text.
+ * @param keyword A keyword to filter the text by.
+ * @returns A promise that resolves to an array of TextResults.
+ */
 export const scrapeText = async (url: string, keyword: string): Promise<TextResult[]> => {
     try {
         const { data } = await axios.get(url);

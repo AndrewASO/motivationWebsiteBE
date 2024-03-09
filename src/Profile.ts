@@ -1,6 +1,6 @@
 /**
- * This stores and modifies all of the information that would belong in profile.
- * There are two constructors and ones for signing in and the other one is for logging in.
+ * Profile management class for handling user profiles, including sign up, login, task management, and profile information updates.
+ * Utilizes MongoDB for storage, bcrypt for password hashing, and supports task operations such as adding, deleting, and updating tasks.
  */
 
 
@@ -21,7 +21,10 @@ export class Profile {
     private tasks: TaskDoc[] = [];
     private db : MongoDB;
 
-
+    /**
+     * Overloaded constructor to support both sign-up (with display name) and login (without display name).
+     * @param args Array containing displayName, username, password, and db for sign-up, or username, password, and db for login.
+     */
     public constructor(displayName : string, username : string, password : string, db : MongoDB); //Constructor for signing up
     public constructor(username : string, password : string, db : MongoDB); //Constructor for logging in
 
@@ -42,7 +45,7 @@ export class Profile {
     } 
 
     /**
-     * This saves a profile created with the signIn constructor to MongoDB as a document
+     * Saves the profile to the database. Used during sign-up to create a new profile document.
      */
     async saveToDB() {
         let collection = this.db.returnCollection("ProfilesDB", "Profiles");
@@ -50,8 +53,7 @@ export class Profile {
     }
 
     /**
-     * This returns all of the information from the Profile's document when gathering it from MongoDB
-     * and sets the variable to their corresponding variable inside of this obj.
+     * Fetches and sets the profile data from the database based on the username.
      */
     public async getUserDBInfo() {
         let collection = this.db.returnCollection("ProfilesDB", "Profiles");
@@ -62,10 +64,10 @@ export class Profile {
     }
 
     /**
-     * Edits all of the variables at once rather than doing them individually
-     * @param displayName 
-     * @param username 
-     * @param password 
+     * Updates profile information including display name, username, and password.
+     * @param displayName New display name.
+     * @param username New username.
+     * @param password New password.
      */
     public editInformation(displayName : string, username : string, password : string) {
         this.displayName = displayName;
@@ -76,7 +78,7 @@ export class Profile {
     }
 
     /**
-     * This updates the MongoDB document that's linked to the username of this profile obj
+     * Updates the profile document in the database to reflect changes made to the profile.
      */
     public updateDB() {
         this.db.updateDB("ProfilesDB", "Profiles", this.username, "DisplayName", this.displayName);
@@ -97,16 +99,20 @@ export class Profile {
     }
 
     /**
-     * Prepares a safe, serializable version of the profile.
+     * Custom toJSON method to exclude the MongoDB instance from serialization, preventing circular reference issues.
      */
-    // Custom toJSON method to exclude non-serializable properties
     toJSON() {
         const { db, ...serializableProps } = this;
         return serializableProps;
     }
 
 
-    // Updated to include unique ID generation for tasks and return the created task
+    /**
+     * Adds a new task to the profile with unique ID, description, and urgency, then updates the database.
+     * @param description Description of the task.
+     * @param urgency Urgency of the task (yearly, monthly, weekly, daily).
+     * @returns The newly created task document.
+     */
     async addTask(description: string, urgency: 'yearly' | 'monthly' | 'weekly' | 'daily'): Promise<TaskDoc> {
         const newTask: TaskDoc = new Task({
             id: uuidv4(), // Generate a unique ID for the new task
@@ -120,13 +126,19 @@ export class Profile {
         return newTask; // Return the new task, including its ID
     }
 
-    // Updated to use the task's unique ID for deletion
+    /**
+     * Deletes a task from the profile using its unique ID and updates the database.
+     * @param taskId ID of the task to be deleted.
+     */
     async deleteTask(taskId: string): Promise<void> {
         this.tasks = this.tasks.filter(task => task.id !== taskId);
         await this.updateDB(); // Update the profile document in MongoDB
     }
 
-    // Updated to toggle the completion status of a task based on its unique ID
+    /**
+     * Toggles the completion status of a specified task by its unique ID and updates the database.
+     * @param taskId ID of the task to toggle completion status.
+     */
     async toggleTaskCompletion(taskId: string) {
         const task = this.tasks.find(task => task.id === taskId);
         if (task) {
@@ -138,7 +150,11 @@ export class Profile {
 
 
 
-    // Function to update the urgency of an existing task
+    /**
+     * Updates the urgency level of a specified task by its unique ID and updates the database.
+     * @param taskId ID of the task to update.
+     * @param newUrgency New urgency level for the task.
+     */
     async updateTaskUrgency(taskId: string, newUrgency: 'yearly' | 'monthly' | 'weekly' | 'daily') {
         const task = this.tasks.find(task => task.id === taskId);
         if (task) {
@@ -148,16 +164,26 @@ export class Profile {
     }
 
 
-    // Updated to allow specifying urgency for calculating completion percentage
+    /**
+     * Calculates and saves the completion percentage of tasks based on their urgency.
+     * @param urgency Urgency level to filter tasks for calculation.
+     * @returns The calculated completion percentage.
+     */
     async calculateAndSaveCompletionPercentage(urgency: 'yearly' | 'monthly' | 'weekly' | 'daily'): Promise<number> {
         return await calculateAndSaveCompletionPercentage(this.tasks, urgency);
     }
 
-
+    /**
+     * Retrieves the list of tasks associated with the profile.
+     * @returns Array of task documents.
+     */
     public getProfileTasks(): TaskDoc[] {
         return this.tasks;
     }
 
+    /**
+     * Resets the tasks for the profile and updates the database.
+     */
     public async resetTasks() {
         this.tasks = new Array();
         this.updateDB();
