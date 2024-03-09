@@ -47,8 +47,8 @@ The Motivation Website Backend serves as a versatile experimentation platform, d
 
 ### Installation
 
-1. Clone the repository: `git clone https://github.com/AndrewASO/MotivationWebsiteBackend`.
-2. Navigate to the project directory: `cd MotivationWebsiteBackend`.
+1. Clone the repository: `git clone https://github.com/AndrewASO/motivationWebsiteBE`.
+2. Navigate to the project directory: `cd motivationWebsiteBE`.
 3. Install dependencies: `npm install`.
 
 ### Running the Project
