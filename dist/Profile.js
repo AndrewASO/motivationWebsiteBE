@@ -1,7 +1,7 @@
 "use strict";
 /**
- * This stores and modifies all of the information that would belong in profile.
- * There are two constructors and ones for signing in and the other one is for logging in.
+ * Profile management class for handling user profiles, including sign up, login, task management, and profile information updates.
+ * Utilizes MongoDB for storage, bcrypt for password hashing, and supports task operations such as adding, deleting, and updating tasks.
  */
 var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
     function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
@@ -48,7 +48,7 @@ class Profile {
         }
     }
     /**
-     * This saves a profile created with the signIn constructor to MongoDB as a document
+     * Saves the profile to the database. Used during sign-up to create a new profile document.
      */
     saveToDB() {
         return __awaiter(this, void 0, void 0, function* () {
@@ -57,8 +57,7 @@ class Profile {
         });
     }
     /**
-     * This returns all of the information from the Profile's document when gathering it from MongoDB
-     * and sets the variable to their corresponding variable inside of this obj.
+     * Fetches and sets the profile data from the database based on the username.
      */
     getUserDBInfo() {
         return __awaiter(this, void 0, void 0, function* () {
@@ -69,10 +68,10 @@ class Profile {
         });
     }
     /**
-     * Edits all of the variables at once rather than doing them individually
-     * @param displayName
-     * @param username
-     * @param password
+     * Updates profile information including display name, username, and password.
+     * @param displayName New display name.
+     * @param username New username.
+     * @param password New password.
      */
     editInformation(displayName, username, password) {
         this.displayName = displayName;
@@ -81,7 +80,7 @@ class Profile {
         this.updateDB();
     }
     /**
-     * This updates the MongoDB document that's linked to the username of this profile obj
+     * Updates the profile document in the database to reflect changes made to the profile.
      */
     updateDB() {
         this.db.updateDB("ProfilesDB", "Profiles", this.username, "DisplayName", this.displayName);
@@ -99,14 +98,18 @@ class Profile {
         this.db = mongo;
     }
     /**
-     * Prepares a safe, serializable version of the profile.
+     * Custom toJSON method to exclude the MongoDB instance from serialization, preventing circular reference issues.
      */
-    // Custom toJSON method to exclude non-serializable properties
     toJSON() {
         const _a = this, { db } = _a, serializableProps = __rest(_a, ["db"]);
         return serializableProps;
     }
-    // Updated to include unique ID generation for tasks and return the created task
+    /**
+     * Adds a new task to the profile with unique ID, description, and urgency, then updates the database.
+     * @param description Description of the task.
+     * @param urgency Urgency of the task (yearly, monthly, weekly, daily).
+     * @returns The newly created task document.
+     */
     addTask(description, urgency) {
         return __awaiter(this, void 0, void 0, function* () {
             const newTask = new tasks_1.Task({
@@ -121,14 +124,20 @@ class Profile {
             return newTask; // Return the new task, including its ID
         });
     }
-    // Updated to use the task's unique ID for deletion
+    /**
+     * Deletes a task from the profile using its unique ID and updates the database.
+     * @param taskId ID of the task to be deleted.
+     */
     deleteTask(taskId) {
         return __awaiter(this, void 0, void 0, function* () {
             this.tasks = this.tasks.filter(task => task.id !== taskId);
             yield this.updateDB(); // Update the profile document in MongoDB
         });
     }
-    // Updated to toggle the completion status of a task based on its unique ID
+    /**
+     * Toggles the completion status of a specified task by its unique ID and updates the database.
+     * @param taskId ID of the task to toggle completion status.
+     */
     toggleTaskCompletion(taskId) {
         return __awaiter(this, void 0, void 0, function* () {
             const task = this.tasks.find(task => task.id === taskId);
@@ -139,7 +148,11 @@ class Profile {
             }
         });
     }
-    // Function to update the urgency of an existing task
+    /**
+     * Updates the urgency level of a specified task by its unique ID and updates the database.
+     * @param taskId ID of the task to update.
+     * @param newUrgency New urgency level for the task.
+     */
     updateTaskUrgency(taskId, newUrgency) {
         return __awaiter(this, void 0, void 0, function* () {
             const task = this.tasks.find(task => task.id === taskId);
@@ -149,15 +162,26 @@ class Profile {
             }
         });
     }
-    // Updated to allow specifying urgency for calculating completion percentage
+    /**
+     * Calculates and saves the completion percentage of tasks based on their urgency.
+     * @param urgency Urgency level to filter tasks for calculation.
+     * @returns The calculated completion percentage.
+     */
     calculateAndSaveCompletionPercentage(urgency) {
         return __awaiter(this, void 0, void 0, function* () {
             return yield (0, tasks_1.calculateAndSaveCompletionPercentage)(this.tasks, urgency);
         });
     }
+    /**
+     * Retrieves the list of tasks associated with the profile.
+     * @returns Array of task documents.
+     */
     getProfileTasks() {
         return this.tasks;
     }
+    /**
+     * Resets the tasks for the profile and updates the database.
+     */
     resetTasks() {
         return __awaiter(this, void 0, void 0, function* () {
             this.tasks = new Array();

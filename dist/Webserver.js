@@ -1,6 +1,11 @@
 "use strict";
 /**
- *
+ * This module defines a web server that serves as the backend for a novel-related application.
+ * It includes endpoints for user profile management, novel chapters scraping, task management,
+ * and interaction with the GPT model. The server utilizes express.js for routing and supports
+ * CORS for cross-origin requests. It integrates MongoDB for data persistence and leverages
+ * custom utility modules for specific functionalities like scraping web content and generating
+ * GPT responses.
  */
 var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
     function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
@@ -98,14 +103,6 @@ function startServer() {
                 const errorMessage = (error instanceof Error) ? error.message : 'An unexpected error occurred.';
                 res.status(500).json({ success: false, message: "An error occurred while retrieving the profile.", error: errorMessage });
             }
-        }));
-        /**
-         * This is the novels API test
-         */
-        server.get('/novelTest', (req, res) => __awaiter(this, void 0, void 0, function* () {
-            //This was mostly used to see if I could work with another websites API
-            const test1 = yield (0, scraper_1.scrapeLinks)("https://fanstranslations.com/novel/in-place-of-losing-my-memory-i-remembered-that-i-was-the-fiancee-of-the-capture-target/ajax/chapters/", "chapter");
-            res.send(test1);
         }));
         /**
          * This is the novels API test
@@ -243,6 +240,7 @@ function startServer() {
                 res.status(400).send({ error: "Failed to calculate completion percentage", details: error instanceof Error ? error.toString() : String(error) });
             }
         }));
+        // Endpoint to send messages to gpt model
         server.post('/ask-gpt', (req, res) => __awaiter(this, void 0, void 0, function* () {
             try {
                 const { query } = req.body;

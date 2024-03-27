@@ -1,8 +1,7 @@
 "use strict";
 /**
- * This is for gathering information via webscrapping
- * There's the url that you can send along with a key word to scrap
- * for that information
+ * This module provides functions for web scraping, enabling the retrieval of links and texts from specified URLs.
+ * It utilizes axios for HTTP requests and cheerio for parsing and manipulating HTML.
  */
 var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
     function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
@@ -20,6 +19,12 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.scrapeText = exports.scrapeLinks = void 0;
 const axios_1 = __importDefault(require("axios"));
 const cheerio_1 = __importDefault(require("cheerio"));
+/**
+ * Asynchronously scrapes links from a given URL based on a specified keyword.
+ * @param url The URL from which to scrape links.
+ * @param keyword A keyword to filter the links by.
+ * @returns A promise that resolves to an array of LinkResults.
+ */
 const scrapeLinks = (url, keyword) => __awaiter(void 0, void 0, void 0, function* () {
     try {
         const { data } = yield axios_1.default.get(url);
@@ -36,6 +41,12 @@ const scrapeLinks = (url, keyword) => __awaiter(void 0, void 0, void 0, function
     }
 });
 exports.scrapeLinks = scrapeLinks;
+/**
+ * Primary method for scraping links using predefined selectors.
+ * @param $ A loaded cheerio instance to query the DOM.
+ * @param keyword A keyword to filter the links by.
+ * @returns An array of LinkResults.
+ */
 function primaryScrapingMethod($, keyword) {
     const linkSelectors = [
         // Combined selectors array
@@ -58,8 +69,11 @@ function primaryScrapingMethod($, keyword) {
     });
     return results;
 }
-//I need to change this for working w the fantranslations website and it could be any link or if its fantranslations
-//then it'll go straight to this 
+/**
+ * Secondary method for scraping, potentially using different logic or selectors based on the URL structure.
+ * @param postUrl The URL to scrape using the secondary method.
+ * @returns A promise that resolves to an array of LinkResults.
+ */
 function secondaryScrapingMethod(postUrl) {
     return __awaiter(this, void 0, void 0, function* () {
         try {
@@ -84,6 +98,12 @@ function secondaryScrapingMethod(postUrl) {
         }
     });
 }
+/**
+ * Asynchronously scrapes text from a given URL based on a specified keyword.
+ * @param url The URL from which to scrape text.
+ * @param keyword A keyword to filter the text by.
+ * @returns A promise that resolves to an array of TextResults.
+ */
 const scrapeText = (url, keyword) => __awaiter(void 0, void 0, void 0, function* () {
     try {
         const { data } = yield axios_1.default.get(url);
