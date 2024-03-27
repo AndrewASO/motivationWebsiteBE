@@ -260,7 +260,7 @@ export async function startServer() {
     }
   });  
 
-  server.listen(3000);
+  server.listen(process.env.PORT || 3000);
 }
 
 
