@@ -20,7 +20,7 @@
     "cheerio": "^1.0.0-rc.12",
     "cors": "^2.8.5",
     "crypto": "^1.0.1",
-    "dotenv": "^16.4.1",
+    "dotenv": "^16.4.5",
     "express": "^4.18.2",
     "mongodb": "^6.3.0",
     "openai": "^4.28.4",
@@ -45,5 +45,9 @@
       "motivationwebsitebe/dist/",
       "motivationwebsitebe/node_modules/"
     ]
+  },
+  "engines": {
+    "node": "14.x",
+    "npm": "6.x"
   }
 }
