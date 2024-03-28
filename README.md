@@ -5,7 +5,7 @@
 
 ## Introduction
 
-The Motivation Website Backend serves as a versatile experimentation platform, designed to explore various new technologies, methodologies, and functionalities. This project is named for its role in motivating continued learning and development in backend technologies. It encompasses user authentication, task management, GPT model integration for chat-based interactions, and web scraping, among other features. This README outlines the architecture, features, setup instructions, and usage of the backend.
+The Motivation Website Backend serves as a versatile experimentation platform, designed to explore various new technologies, methodologies, and functionalities. This project is named for its role in motivating continued learning and development in backend technologies. It encompasses user authentication, task management, GPT model integration for chat-based interactions, and web scraping, among other features. This README outlines the architecture, features, setup instructions, and usage of the backend. The link to the website is https://jovial-puppy-d148b0.netlify.app/gpt
 
 ## Features
 
